@@ -1,8 +1,8 @@
 import RPi.GPIO as GPIO
 import time
+GPIO.cleanup()
 GPIO.setmode(GPIO.Board)
-e = 36
-n = True
+n = 22
 a = 38
 b = 40
 l = 16
@@ -17,7 +17,6 @@ GPIO.setup(b,GPIO.OUT) #B
 GPIO.output(l, False)
 GPIO.outout(r, False)
 #Rudder Motor
-GPIO.output(e, False)
 GPIO.output(a, False)
 GPIO.output(b, False)
 #Vertical Motors
@@ -30,51 +29,52 @@ turnStart = 0 #seconds
 straightStart = 10 #seconds
 moveTime = 2 #seconds
 left = True
-for num in range(1, takeoff)
+burst = True
+#Emergency Button
+GPIO.setup(n,GPIO.IN)
+for num in range(1, takeoff) #for the amount of time takeoff needs to happen
     GPIO.output(u,True)
-GPIO.output(u,False)
+GPIO.output(u,False) #end takeoff and begin forward motion
 GPIO.output(l,True)
 GPIO.output(r,True)
-for num in range(1,(minutes*60)):
+for num in range(1,(minutes*60)): #for the amount of time we need it to run in seconds
     if(left)
         if num % interval == turnStart #Start turning rudder left
-	    GPIO.output(e, True)
 	    GPIO.output(a, True)
             GPIO.output(b, False)
 	elif num % interval == (turn Start + moveTime) #Stop turning rudder left
-	    GPIO.output(e, False)
 	    GPIO.output(a, False)
             GPIO.output(b, False)
 	elif num % interval == straightStart #Start restraightening rudder from left
-	    GPIO.output(e, True)
 	    GPIO.output(a, False)
 	    GPIO.output(b, True)
     else
         if num % interval == turnStart #Start turning rudder right
-	    GPIO.output(e, True)
 	    GPIO.output(a, False)
 	    GPIO.output(b, True)
         elif num % interval == (turn Start + moveTime) #Stop turning rudder right
-	    GPIO.output(e, False)
 	    GPIO.output(a, False)
 	    GPIO.output(b, False)
         elif num % interval == straightStart #Start restraightening rudder from right
-	    GPIO.output(e, True)
 	    GPIO.output(a, True)
 	    GPIO.output(b, False)
 						
     if num % interval == (straightStart + moveTime) #Stop restraightening rudder
-	GPIO.output(e, False)
 	GPIO.output(a, False)
 	GPIO.output(b, False)
 	left = !left
-    if (!n)
+    #Sensor recording code here
+    if (GPIO.input(n)) #Emergency Shutdown
+        GPIO.cleanup()
 	sys.exit("Emergency Shutdown Engaged!!!")
+    GPIO.output(u,burst) #Burst upward drive motor to stay aloft
     time.sleep(1)
-GPIO.output(e, False) #Blimp will circle in place
-n = False
-GPIO.output(a, False)
-GPIO.output(b, False)
-GPIO.output(l, False)
-GPIO.outout(r, True)
-GPIO.cleanup()
+    burst = !burst
+while True:         #Blimp will circle in place
+    GPIO.output(a, False)
+    GPIO.output(b, False)
+    GPIO.output(l, False)
+    GPIO.output(r, True)
+    if(GPIO.input(n)) #End-program
+        GPIO.cleanup()
+        sys.exit("Normal")
